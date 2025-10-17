@@ -41,38 +41,41 @@
 </template>
 
 <script setup>
-    import api from '~/services/api.ts';
+    import { useAuthStore } from '~/stores/useAuthStore';
+    import { useAuth } from '~/composables/useAuth';
 
     const formData = reactive({
         email: '',
         password: ''
     });
 
+    const router = useRouter();
+    const { login } = useAuth();
     const isLoading = ref(false);
     const errorMessage = ref('');
+    const auth = useAuthStore();
 
-    const handleLogin = async () => {
+    async function handleLogin () {
         isLoading.value = true;
         errorMessage.value = '';
 
         try {
-            const response = await api('/auth/login', {
-                method: 'POST',
-                body: formData 
-            });
-            console.log('Login successfull', response.data);
-
-            const token = response.token;
-
-            if(token) {
-                localStorage.setItem('auth_token', token);
-                await navigateTo('/users/me');
+            await login(formData.email, formData.password);
+            if (auth.user._id) {
+                console.log(auth.user._id);
+                navigateTo('/users');
+            } else {
+                console.log(auth.error);
+                errorMessage.value = auth.error || 'Erreur de connexion';
             }
+
         } catch (error) {
-            errorMessage.value = error.data?.message;
-            console.log('Error creating a user', error);
+            errorMessage.value = error.message || 'Erreur de connexion';
+        } finally {
+            isLoading.value = false;
         }
     }
+    
 </script>
 
 <style scoped>

@@ -2,5 +2,8 @@
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
   devtools: { enabled: true },
-  modules: ['@nuxt/content', '@nuxt/image', '@nuxt/ui']
+  modules: ['@pinia/nuxt', '@nuxt/content', '@nuxt/image', '@nuxt/ui'],
+  // routeRules: {
+  //   '/login': { redirect: '/auth/login' },
+  // },
 })

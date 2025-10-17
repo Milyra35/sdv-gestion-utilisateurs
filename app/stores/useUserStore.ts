@@ -1,4 +1,4 @@
-import {defineStore} from 'pinia';
+import { defineStore } from 'pinia';
 
 interface User {
     _id: string;
@@ -9,37 +9,52 @@ interface User {
 
 export const useUserStore = defineStore('user', {
     state: () => ({
-        loggedUser: null as User | null,
-        isLogged: false
+        users: [] as User[],
+        loading: false,
+        error: null as string | null
     }),
 
     actions: {
-        loginUser(user: User) {
-            this.loggedUser = user;
-            this.isLogged = true;
-            localStorage.setItem('loggedUser', JSON.stringify(user));
-        },
+        async getUsers () {
+            const { $api } = useNuxtApp();
 
-        logoutUser() {
-            this.loggedUser = null;
-            this.isLogged = false;
-            localStorage.removeItem('loggedUser');
-        },
+            this.loading = true;
+            this.error = null;
+            
+            try {
+                const response = await $api<User[]>('/users', {
+                    method: 'GET',
+                });
+                this.users = response;
+            } catch (error) {
+                console.log(error);
+                this.error = 'Failed to load users';
+                throw new Error('Failed to load users');
+            } finally {
+                this.loading = false;
+            }
 
-        fromStorage() {
-            const storedUser = localStorage.getItem('loggedUser');
-            if(storedUser) {
-                this.loggedUser = JSON.parse(storedUser);
-                this.isLogged = true;
+        }, 
+
+        async deleteUser (id: number) {
+            const { $api } = useNuxtApp()
+
+            this.loading = true
+
+            try {
+                await $api(`/users/${id}`, {
+                    method: 'DELETE',
+                })
+    
+                this.users = this.users.filter(user => user._id !== id)
+            } catch (error) {
+                console.log(error);
+                throw new Error('Delete user failed')
+                
+            } finally {
+                this.loading = false
             }
         }
-    },
-    
-    getters: {
-        isLoggedUser: (state) => {
-            return (id: string) => {
-                return state.loggedUser?._id === id;
-            }
-        },
-    },
+        
+    }
 });

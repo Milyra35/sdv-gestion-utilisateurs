@@ -40,7 +40,7 @@
 
             <div v-if="errorMessage">{{ errorMessage }}</div>
 
-            <div v-if="successMessage">{{ sucessMessage }}</div>
+            <div v-if="successMessage">{{ successMessage }}</div>
 
             <button type="submit" :disabled="isLoading">
                 <span v-if="isLoading">Inscription en cours</span>
@@ -50,16 +50,17 @@
 
         <p>
             Vous avez déjà un compte ?
-            <NuxtLink to="auth/login">Se connecter</NuxtLink>
+            <NuxtLink to="/auth/login">Se connecter</NuxtLink>
         </p>
     </div>
 </template>
 
 <script setup>
-    import api from '~/services/api.ts';
-    import {useRouter} from 'vue-router';
+    import { useAuthStore } from '~/stores/useAuthStore';
+    import { useAuth } from '~/composables/useAuth';
 
-    const router = useRouter();
+    const auth = useAuthStore();
+    const { register } = useAuth();
 
     const formData = reactive({
         name: '',
@@ -77,20 +78,10 @@
         successMessage.value = '';
 
         try {
-            const response = await api('/auth/register', {
-                method: 'POST',
-                body: formData 
-            });
-            console.log('Inscription réussite', response.data);
+            await register(formData.name, formData.email, formData.password);
+            navigateTo('/users');
         } catch (error) {
-            console.log('Erreur d\'inscription: ', error);
-            const backendErr = error.data?.message;
-
-            if(backendErr) {
-                errorMessage.value = backendErr;
-            } else {
-                errorMessage.value = "Une erreur est survenue lors de l'inscription";
-            }
+            errorMessage.value = error.message || 'Erreur de création de user';
         } finally {
             isLoading.value = false;
         }
